@@ -1,6 +1,4 @@
-from functools import reduce
 import numpy as np
-from operator import mul, sub
 import timeit
 
 
@@ -30,7 +28,7 @@ def gauss_method(matrix):
         return
     for k in range(n - 1, -1, -1):
         x[k] = (matrix[k][-1] - sum([matrix[k][j] * x[j] for j in range(k + 1, n)])) / matrix[k][k]
-        x[k] = float("%.5f" % x[k])
+        x[k] = float("%.4f" % x[k])
     return x
 
 
@@ -54,22 +52,6 @@ def column(row):
     return i if i < n else -1
 
 
-def det(matrix):
-    M = matrix[:]
-    n = len(M)
-
-    indexes = [0 for _ in range(n)]
-
-    for i in range(n):
-        k = column(M[i])
-        for j in (x for x in range(n) if x != i):
-            M[j] = tuple(map(sub, M[j],
-                             map(mul, M[i], [M[j][k] / M[i][k]] * (n + 1))))
-        indexes[i] = k
-
-    return reduce(mul, (M[i][indexes[i]] for i in range(n)), 1) * sign(indexes)
-
-
 def kramer_method(les):
     n = len(les)
     x = np.zeros(n)
@@ -77,7 +59,7 @@ def kramer_method(les):
     b = tmp[-1]
     del tmp[-1]
 
-    delta = det(tmp)
+    delta = np.linalg.det(tmp)
     if not delta:
         raise RuntimeError("No solution")
 
@@ -85,9 +67,9 @@ def kramer_method(les):
     for i in range(n):
         a = tmp[:]
         a[i] = b
-        result.append(det(a) / delta)
+        result.append(np.linalg.det(a) / delta)
         x[i] = result[i]
-        x[i] = float("%.5f" % x[i])
+        x[i] = float("%.4f" % x[i])
     return x
 
 
@@ -102,7 +84,7 @@ def iteration_method(a, b, eps):
             s1 = sum(a[i][j] * x_new[j] for j in range(i))
             s2 = sum(a[i][j] * x[j] for j in range(i + 1, n))
             x_new[i] = (b[i] - s1 - s2) / a[i][i]
-            x_new[i] = float("%.5f" % x_new[i])
+            x_new[i] = float("%.4f" % x_new[i])
         for i in range(1, n - 1):
             if abs(x_new[max] - x[max]) < abs(x_new[i + 1] - x[i + 1]):
                 max = i + 1
@@ -119,7 +101,7 @@ a = [[25.0, -1.0, 1.0, 1.0],
 b = [39.0, 0.0, -25.0, 18.0]
 c = []
 x = np.zeros(4)
-eps = 10e-5
+eps = 10e-4
 
 for i in range(len(a)):
     c.append(a[i].copy())
@@ -128,21 +110,24 @@ for i in range(len(a)):
 print("Kramer method: ")
 start_time = timeit.default_timer()
 print(kramer_method(c))
-print("Runtime in milliseconds:", (timeit.default_timer() - start_time) * 1000)
+time = (timeit.default_timer() - start_time) * 1000
+print("Runtime in milliseconds: %.3f" % time)
 
 print("\nIteration method: ")
 start_time = timeit.default_timer()
 print(iteration_method(a, b, eps))
-print("Runtime in milliseconds:", (timeit.default_timer() - start_time) * 1000)
+time = (timeit.default_timer() - start_time) * 1000
+print("Runtime in milliseconds: %.3f" % time)
 
 print("\nGaussian method with pivot selection by column:")
 start_time = timeit.default_timer()
 print(gauss_method(c))
-print("Runtime in milliseconds:", (timeit.default_timer() - start_time) * 1000)
+time = (timeit.default_timer() - start_time) * 1000
+print("Runtime in milliseconds: %.3f" % time)
 
 print("\nCheck:")
 res = np.zeros(4)
 for i in range(len(res)):
     res[i] = np.linalg.solve(a, b)[i]
-    res[i] = float("%.5f" % res[i])
+    res[i] = float("%.4f" % res[i])
 print(res)
